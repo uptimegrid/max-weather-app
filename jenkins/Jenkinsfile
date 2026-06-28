@@ -10,6 +10,13 @@
 pipeline {
   agent any
 
+  // The controller is private (no inbound internet), so GitHub webhooks cannot
+  // reach it. Poll GitHub every ~2 min (outbound via NAT) and build on a new
+  // commit, mirroring the infra pipeline's trigger.
+  triggers {
+    pollSCM('H/2 * * * *')
+  }
+
   environment {
     AWS_REGION = 'ap-southeast-1'
     // <account-id>.dkr.ecr.<region>.amazonaws.com (Terraform output: repository_url without the repo name)
