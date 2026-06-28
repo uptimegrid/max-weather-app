@@ -1,0 +1,10 @@
+{
+  "name": "max-weather-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Assessment weather proxy service",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js"
+  }
+}
