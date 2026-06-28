@@ -1,8 +1,9 @@
 // Build pipeline for max-weather-app.
 //
 // Responsibility: build the container image from this repository and push it to
-// Amazon ECR with an immutable tag. Deployment/promotion is handled separately
-// by the max-weather-platform deploy pipeline, which consumes this image tag.
+// Amazon ECR with an immutable tag, then hand the tag off to the
+// max-weather-platform deploy pipeline (staging -> approve -> production) so a
+// new commit flows all the way to a deployment automatically.
 //
 // Agent requirements (self-hosted): docker, aws CLI v2.
 // The agent's IAM role/credentials need ECR push permission.
@@ -43,6 +44,17 @@ pipeline {
           docker push "$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG"
           echo "Pushed $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG"
         '''
+      }
+    }
+
+    stage('Trigger Deploy') {
+      steps {
+        // Fire-and-forget: kick off the platform deploy pipeline with the tag we
+        // just pushed and return immediately (wait: false) so this build does
+        // not block on the deploy's manual production-approval gate.
+        build job: 'max-weather-platform-deploy',
+          parameters: [string(name: 'IMAGE_TAG', value: env.IMAGE_TAG)],
+          wait: false
       }
     }
   }
